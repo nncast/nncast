@@ -1,5 +1,8 @@
-## hmmmmmmmmmmmmhmhmmmmmmmmmmmhmm
-
+<div id="badges">
+ <a href="[LinkedIn](https://www.linkedin.com/in/janelleanncastillo/)">
+   <img src="https://img.shields.io/badge/LinkedIn-blue?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn Badge"/>
+ </a>
+</div>
 <!--
 **nncast/nncast** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
 
