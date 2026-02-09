@@ -1,5 +1,4 @@
-# <img src="https://media.giphy.com/media/3ornk57KwDXf81rjWM/giphy.gif" width="120"/>, I'm Janelle 👍
-
+# <img src="https://media.giphy.com/media/3ornk57KwDXf81rjWM/giphy.gif" width="200"/>
 
 
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-blue?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/janelleanncastillo/)
