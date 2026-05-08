@@ -4,8 +4,6 @@
 
 <img src="https://skillicons.dev/icons?i=html,css,js,php,python,java,cpp,visualstudio,dotnet,git,github&theme=dark" alt="Tech Stack"/> 
 
-<img src="https://komarev.com/ghpvc/?username=nncast&color=blue&style=flat-square&label=People+confused+by+my+code" alt="Profile views"/>
-
 Connect with Me
 <p align="center"> 
   <a href="https://www.linkedin.com/in/janelleanncastillo/"> 
