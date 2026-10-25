@@ -1,6 +1,10 @@
 <p align="center">
   <a href="https://nncast.github.io/janelle-portfolio/">
-    <img src="card.svg" alt="Janelle Ann Castillo: designer and developer. Level, skills and GitHub stats, updated daily." width="840"/>
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="card-dark.svg">
+      <source media="(prefers-color-scheme: light)" srcset="card-light.svg">
+      <img src="card-dark.svg" alt="Janelle Ann Castillo: designer and developer. Languages and commit count, updated daily." width="840"/>
+    </picture>
   </a>
 </p>
 

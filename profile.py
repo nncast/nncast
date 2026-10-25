@@ -1,4 +1,4 @@
-"""Draw card.svg: a tmux-style terminal session with live GitHub stats.
+"""Draw card-dark.svg and card-light.svg: a tmux-style terminal with live GitHub stats.
 
 Runs daily via GitHub Actions. Needs Pillow (reads sprite.gif) and a
 GITHUB_TOKEN env var. `python profile.py --demo` renders sample stats offline.
@@ -7,7 +7,6 @@ import base64
 import html
 import io
 import json
-import math
 import os
 import sys
 import urllib.request
@@ -19,9 +18,15 @@ USER = "nncast"
 SPRITE_PX = 64  # sprite.gif is pixelated to this many pixels wide
 FRAME_STEP = 2  # keep every 2nd GIF frame; the card stays small
 
-C = {"bg": "#15131f", "bar": "#211e30", "edge": "#3a3550", "user": "#ff7eb6",
-     "path": "#78dce8", "cmd": "#f4f1ff", "key": "#a9a1d1", "out": "#d6d2ea",
-     "dim": "#6c6688", "xp": "#a6e22e", "track": "#2c2840", "status": "#ff7eb6"}
+# backgrounds are transparent, so these sit on GitHub's own page colour
+PALETTES = {
+    "dark": {"user": "#ff7eb6", "path": "#78dce8", "cmd": "#f0f6fc", "key": "#a9a1d1",
+             "out": "#c9d1d9", "dim": "#6e7681", "edge": "#30363d", "track": "#21262d",
+             "accent": "#a6e22e"},
+    "light": {"user": "#c4256e", "path": "#0e7490", "cmd": "#1f2328", "key": "#6639ba",
+              "out": "#31363c", "dim": "#6e7781", "edge": "#d0d7de", "track": "#eaeef2",
+              "accent": "#1a7f37"},
+}
 
 PROMPT = [("janelle", "user"), ("@", "dim"), (USER, "user"), (":", "dim"), ("~", "path"), ("$ ", "dim")]
 WHOAMI = "Janelle Ann Castillo, designer & developer"
@@ -31,8 +36,9 @@ ABOUT = [
     ("tools", "Aseprite, Flutter, Laravel, Python"),
 ]
 
-W, H = 840, 470
+W, H = 840, 430
 SPLIT = 560  # x of the tmux pane divider
+TOP = 30  # title bar height
 LH = 18  # line height
 
 
@@ -59,7 +65,7 @@ def fetch_stats():
     first = int(u["createdAt"][:4])
     years = "\n".join(
         f'y{y}: contributionsCollection(from: "{y}-01-01T00:00:00Z", to: "{y}-12-31T23:59:59Z")'
-        " { contributionCalendar { totalContributions } }"
+        " { totalCommitContributions restrictedContributionsCount }"
         for y in range(first, datetime.now(timezone.utc).year + 1)
     )
     c = graphql(f'query {{ user(login: "{USER}") {{ {years} }} }}')
@@ -68,18 +74,13 @@ def fetch_stats():
         for e in repo["languages"]["edges"]:
             name = e["node"]["name"]
             size = langs.get(name, (0,))[0]
-            langs[name] = (size + e["size"], e["node"]["color"] or C["key"])
+            langs[name] = (size + e["size"], e["node"]["color"] or "#8b949e")
     return {
-        "xp": sum(v["contributionCalendar"]["totalContributions"] for v in c.values()),
+        # restricted = private-repo activity, counted only if the profile shows it
+        "commits": sum(v["totalCommitContributions"] + v["restrictedContributionsCount"] for v in c.values()),
+        "since": first,
         "langs": sorted(langs.items(), key=lambda kv: -kv[1][0]),
     }
-
-
-def level(xp):
-    # level n starts at 10*n^2 XP, so each level takes a little longer
-    n = math.isqrt(xp // 10)
-    lo, hi = 10 * n * n, 10 * (n + 1) ** 2
-    return n, (xp - lo) / (hi - lo), hi - xp
 
 
 def sprite_sheet(path):
@@ -104,40 +105,29 @@ def sprite_sheet(path):
     return base64.b64encode(buf.getvalue()).decode(), w, h, len(frames), ms
 
 
-def line(x, y, segs, anchor="start", cls=""):
-    """One text line from (text, colour key) segments."""
-    c = f' class="{cls}"' if cls else ""
-    spans = "".join(f'<tspan fill="{C[k]}">{html.escape(t)}</tspan>' for t, k in segs)
-    return f'<text x="{x}" y="{y}" text-anchor="{anchor}" xml:space="preserve"{c}>{spans}</text>'
-
-
-def bar(x, y, w, frac, color):
-    return (f'<rect x="{x}" y="{y - 9}" width="{w}" height="9" fill="{C["track"]}"/>'
-            f'<rect x="{x}" y="{y - 9}" width="{round(w * frac)}" height="9" fill="{color}"/>')
-
-
-def render(s, sprite, today):
-    lv, frac, need = level(s["xp"])
+def render(s, sprite, today, C):
     png, fw, fh, n, ms = sprite
+
+    def line(x, y, segs, anchor="start"):
+        spans = "".join(f'<tspan fill="{C[k]}">{html.escape(t)}</tspan>' for t, k in segs)
+        return f'<text x="{x}" y="{y}" text-anchor="{anchor}" xml:space="preserve">{spans}</text>'
+
     out = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" '
         'font-family="ui-monospace, SFMono-Regular, Consolas, Menlo, monospace" font-size="14">',
         "<style>.blink{animation:a 1s steps(1) infinite}@keyframes a{50%{opacity:0}}"
         f"@keyframes cat{{to{{transform:translateX(-{fw * n}px)}}}}</style>",
-        f'<rect x="0.5" y="0.5" width="{W - 1}" height="{H - 1}" rx="10" fill="{C["bg"]}" stroke="{C["edge"]}"/>',
-        # title bar
-        f'<path d="M1 30V11a10 10 0 0 1 10-10h{W - 22}a10 10 0 0 1 10 10v19z" fill="{C["bar"]}"/>',
-        *(f'<circle cx="{20 + i * 20}" cy="15.5" r="6" fill="{c}"/>' for i, c in enumerate(("#ff5f57", "#febc2e", "#28c840"))),
-        line(W // 2, 20, [(f"janelle@{USER}: ~ (tmux)", "dim")], "middle"),
-        # pane divider and status bar
-        f'<line x1="{SPLIT}" y1="30" x2="{SPLIT}" y2="{H - 26}" stroke="{C["edge"]}"/>',
-        f'<path d="M1 {H - 26}h{W - 2}v15a10 10 0 0 1-10 10H11a10 10 0 0 1-10-10z" fill="{C["bar"]}"/>',
-        line(14, H - 9, [(f"[{USER}] ", "status"), ("0:zsh* ", "cmd"), ("1:cat", "dim")]),
-        line(W - 14, H - 9, [(f"updated {today}", "dim")], "end"),
+        # title bar, pane divider and tmux status line
+        line(W // 2, 19, [(f"janelle@{USER}: ~ (tmux)", "dim")], "middle"),
+        f'<line x1="0" y1="{TOP}" x2="{W}" y2="{TOP}" stroke="{C["edge"]}"/>',
+        f'<line x1="{SPLIT}" y1="{TOP}" x2="{SPLIT}" y2="{H - 28}" stroke="{C["edge"]}"/>',
+        f'<line x1="0" y1="{H - 28}" x2="{W}" y2="{H - 28}" stroke="{C["edge"]}"/>',
+        line(4, H - 8, [(f"[{USER}] ", "user"), ("0:zsh* ", "cmd"), ("1:cat", "dim")]),
+        line(W - 4, H - 8, [(f"updated {today}", "dim")], "end"),
     ]
 
     # left pane: a short shell session
-    x, y = 20, 56
+    x, y = 4, TOP + 24
     k2 = x + 72  # value column
 
     def cmd(c):
@@ -161,16 +151,16 @@ def render(s, sprite, today):
     total = sum(size for _, (size, _) in s["langs"]) or 1
     for name, (size, color) in top:
         pct = size / total
+        bw = round(280 * size / top[0][1][0])
         out.append(line(x, y, [(name, "out")]))
-        out.append(bar(x + 170, y, 280, pct / (top[0][1][0] / total), color))
+        out.append(f'<rect x="{x + 170}" y="{y - 9}" width="280" height="9" fill="{C["track"]}"/>')
+        out.append(f'<rect x="{x + 170}" y="{y - 9}" width="{bw}" height="9" fill="{color}"/>')
         out.append(line(SPLIT - 20, y, [(f"{pct:.0%}", "dim")], "end"))
         y += LH
     y += LH
 
-    cmd("gh xp")
-    out.append(line(x, y, [(f"lv {lv}", "xp")]))
-    out.append(bar(x + 60, y, 160, frac, C["xp"]))
-    out.append(line(x + 236, y, [(f"{s['xp']:,} xp", "out"), (f"  {need:,} to lv {lv + 1}", "dim")]))
+    cmd("git log --all --oneline | wc -l")
+    out.append(line(x, y, [(f"{s['commits']:,}", "accent"), (f"  commits since {s['since']}", "dim")]))
     y += LH * 2
 
     out.append(line(x, y, PROMPT))
@@ -178,11 +168,11 @@ def render(s, sprite, today):
     out.append(f'<rect class="blink" x="{cx}" y="{y - 12}" width="8" height="15" fill="{C["cmd"]}"/>')
 
     # right pane: `cat cat.gif` "prints" the cat
-    out.append(line(SPLIT + 16, 56, PROMPT[-1:] + [("cat cat.gif", "cmd")]))
-    pw, ph = W - SPLIT - 32, 340
+    out.append(line(SPLIT + 16, TOP + 24, PROMPT[-1:] + [("cat cat.gif", "cmd")]))
+    pw, ph = W - SPLIT - 32, H - TOP - 80
     scale = min(pw // fw, ph // fh)
     sw, sh = fw * scale, fh * scale
-    sx, sy = SPLIT + (W - SPLIT - sw) // 2, 76 + (ph - sh) // 2
+    sx, sy = SPLIT + (W - SPLIT - sw) // 2, TOP + 40 + (ph - sh) // 2
     # one strip of frames, slid left a frame at a time inside a clipped viewport
     out.append(
         f'<svg x="{sx}" y="{sy}" width="{sw}" height="{sh}" viewBox="0 0 {fw} {fh}">'
@@ -194,24 +184,17 @@ def render(s, sprite, today):
     return "\n".join(out)
 
 
-def selfcheck():
-    assert level(0) == (0, 0.0, 10)
-    assert level(10)[:2] == (1, 0.0)
-    assert level(39) == (1, 29 / 30, 1)
-    assert level(40)[0] == 2
-
-
-DEMO = {"xp": 1234,
+DEMO = {"commits": 1234, "since": 2022,
         "langs": [("HTML", (900, "#e34c26")), ("Dart", (600, "#00B4AB")),
                   ("PHP", (400, "#4F5D95")), ("Python", (300, "#3572A5"))]}
 
 if __name__ == "__main__":
-    selfcheck()
     here = os.path.dirname(os.path.abspath(__file__))
     stats = DEMO if "--demo" in sys.argv else fetch_stats()
-    print("xp:", stats["xp"], [n for n, _ in stats["langs"][:5]])
+    print("commits:", stats["commits"], [n for n, _ in stats["langs"][:5]])
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    svg = render(stats, sprite_sheet(os.path.join(here, "sprite.gif")), today)
-    with open(os.path.join(here, "card.svg"), "w", encoding="utf-8") as f:
-        f.write(svg)
-    print("wrote card.svg")
+    sprite = sprite_sheet(os.path.join(here, "sprite.gif"))
+    for mode, palette in PALETTES.items():
+        with open(os.path.join(here, f"card-{mode}.svg"), "w", encoding="utf-8") as f:
+            f.write(render(stats, sprite, today, palette))
+    print("wrote card-dark.svg, card-light.svg")
