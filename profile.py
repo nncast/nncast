@@ -18,7 +18,7 @@ from PIL import Image, ImageSequence
 USER = "nncast"
 SPRITE_PX = 64  # sprite.gif is pixelated to this many pixels wide
 FRAME_STEP = 2  # keep every 2nd GIF frame; the card stays small
-FONT = "BoldPixels"
+FONT = "KenneyMiniSquare"  # CC0, kenney.nl
 
 C = {"bg": "#14122b", "panel": "#1d1a3d", "edge": "#3d3778", "gold": "#f2b632",
      "text": "#ecebff", "muted": "#8e89c4", "xp": "#5fd18b", "track": "#2b2754"}
@@ -30,7 +30,6 @@ PROFILE = [
     ("JOBS", "Game Artist · Digital Artist"),
     ("TOOLS", "Aseprite, Flutter, Laravel, Python"),
 ]
-TROPHY = "2nd Place · CODE & CONQUER Game Dev Challenge 2026"
 LINK = "nncast.github.io/janelle-portfolio"
 
 
@@ -50,11 +49,8 @@ def graphql(query):
 def fetch_stats():
     u = graphql(f"""query {{ user(login: "{USER}") {{
       createdAt
-      followers {{ totalCount }}
       repositories(first: 100, ownerAffiliations: OWNER, privacy: PUBLIC, isFork: false) {{
-        totalCount
-        nodes {{ stargazerCount
-          languages(first: 10) {{ edges {{ size node {{ name color }} }} }} }}
+        nodes {{ languages(first: 10) {{ edges {{ size node {{ name color }} }} }} }}
       }}
     }} }}""")
     first = int(u["createdAt"][:4])
@@ -71,9 +67,6 @@ def fetch_stats():
             size = langs.get(name, (0,))[0]
             langs[name] = (size + e["size"], e["node"]["color"] or C["muted"])
     return {
-        "repos": u["repositories"]["totalCount"],
-        "stars": sum(r["stargazerCount"] for r in u["repositories"]["nodes"]),
-        "followers": u["followers"]["totalCount"],
         "xp": sum(v["contributionCalendar"]["totalContributions"] for v in c.values()),
         "langs": sorted(langs.items(), key=lambda kv: -kv[1][0]),
     }
@@ -167,7 +160,7 @@ def render(s, sprite, font_b64):
     out.append(bar(44, 388, 200, frac, C["xp"]))
     out.append(text(144, 424, f"{need:,} XP to LV {lv + 1}", C["muted"], 14, "middle"))
 
-    # right: profile, stats, inventory
+    # right: profile and skills
     x0, x1 = 288, 816
     out.append(text(x0, 52, "STATUS", C["gold"], 18))
     for i, (k, v) in enumerate(PROFILE):
@@ -176,26 +169,16 @@ def render(s, sprite, font_b64):
         out.append(text(x0 + 92, y, v, C["text"], 16))
 
     out.append(text(x0, 222, "SKILLS", C["gold"], 18))
-    top = s["langs"][:4]
+    top = s["langs"][:6]
     total = sum(size for _, (size, _) in s["langs"]) or 1
     for i, (name, (size, color)) in enumerate(top):
-        y = 248 + i * 22
+        y = 252 + i * 30
         pct = size / total
         out.append(text(x0, y, name, C["text"], 16))
-        out.append(bar(x0 + 130, y - 10, 300, pct / (top[0][1][0] / total), color))
+        out.append(bar(x0 + 170, y - 10, 270, pct / (top[0][1][0] / total), color))
         out.append(text(x1, y, f"{pct:.0%}", C["muted"], 16, "end"))
 
-    out.append(text(x0, 352, "INVENTORY", C["gold"], 18))
-    items = [("REPOS", s["repos"]), ("STARS", s["stars"]), ("FOLLOWERS", s["followers"])]
-    bw = (x1 - x0 - 2 * 12) // 3
-    for i, (k, v) in enumerate(items):
-        bx = x0 + i * (bw + 12)
-        out.append(box(bx, 364, bw, 44, C["panel"], C["edge"]))
-        out.append(text(bx + 14, 392, k, C["muted"], 14))
-        out.append(text(bx + bw - 14, 393, f"{v:,}", C["text"], 20, "end"))
-
-    out.append(text(x0, 436, "★ " + TROPHY, C["gold"], 15))
-    out.append(text(x1, 456, "▶ " + LINK, C["muted"], 13, "end", "blink"))
+    out.append(text(x1, 456, "> " + LINK, C["muted"], 13, "end", "blink"))
     out.append("</svg>")
     return "\n".join(out)
 
@@ -207,7 +190,7 @@ def selfcheck():
     assert level(40)[0] == 2
 
 
-DEMO = {"repos": 12, "stars": 9, "followers": 5, "xp": 1234,
+DEMO = {"xp": 1234,
         "langs": [("HTML", (900, "#e34c26")), ("Dart", (600, "#00B4AB")),
                   ("PHP", (400, "#4F5D95")), ("Python", (300, "#3572A5"))]}
 
@@ -215,8 +198,8 @@ if __name__ == "__main__":
     selfcheck()
     here = os.path.dirname(os.path.abspath(__file__))
     stats = DEMO if "--demo" in sys.argv else fetch_stats()
-    print("stats:", {k: v for k, v in stats.items() if k != "langs"}, [n for n, _ in stats["langs"][:4]])
-    with open(os.path.join(here, "BoldPixels.ttf"), "rb") as f:
+    print("xp:", stats["xp"], [n for n, _ in stats["langs"][:6]])
+    with open(os.path.join(here, f"{FONT}.ttf"), "rb") as f:
         font = base64.b64encode(f.read()).decode()
     svg = render(stats, sprite_sheet(os.path.join(here, "sprite.gif")), font)
     with open(os.path.join(here, "card.svg"), "w", encoding="utf-8") as f:

@@ -18,5 +18,3 @@
     <img src="https://img.shields.io/badge/EMAIL-EA4335?style=for-the-badge&logo=gmail&logoColor=white"/>
   </a>
 </p>
-
-<sub>Card redrawn daily by <a href="profile.py">profile.py</a>. Cat from <a href="https://giphy.com/stickers/XIjw2n4kUXxuqDn7dN">GIPHY</a>, pixelated in Python. Font: BoldPixels by <a href="https://yukipixels.itch.io/">Yūki</a> (<a href="https://www.instagram.com/yukipixels">@YukiPixels</a>), CC BY-SA 4.0.</sub>
