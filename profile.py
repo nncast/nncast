@@ -27,8 +27,6 @@ PROMPT = [("janelle", "user"), ("@", "dim"), (USER, "user"), (":", "dim"), ("~",
 WHOAMI = "Janelle Ann Castillo, designer & developer"
 ABOUT = [
     ("role", "Designer & Developer"),
-    ("home", "Santiago City, Isabela"),
-    ("school", "University of La Salette"),
     ("jobs", "Game Artist, Digital Artist"),
     ("tools", "Aseprite, Flutter, Laravel, Python"),
 ]
