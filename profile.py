@@ -117,17 +117,21 @@ def render(s, sprite, today, C):
         'font-family="ui-monospace, SFMono-Regular, Consolas, Menlo, monospace" font-size="14">',
         "<style>.blink{animation:a 1s steps(1) infinite}@keyframes a{50%{opacity:0}}"
         f"@keyframes cat{{to{{transform:translateX(-{fw * n}px)}}}}</style>",
-        # title bar, pane divider and tmux status line
+        # window outline, title bar with linux-style controls, pane divider, tmux status line
+        f'<rect x="0.5" y="0.5" width="{W - 1}" height="{H - 1}" rx="8" fill="none" stroke="{C["edge"]}"/>',
         line(W // 2, 19, [(f"janelle@{USER}: ~ (tmux)", "dim")], "middle"),
+        f'<g stroke="{C["dim"]}" stroke-width="1.5" fill="none">'
+        f'<path d="M{W - 82} 19h10"/><rect x="{W - 57}" y="10" width="9" height="9"/>'
+        f'<path d="M{W - 32} 10l9 9m0-9l-9 9"/></g>',
         f'<line x1="0" y1="{TOP}" x2="{W}" y2="{TOP}" stroke="{C["edge"]}"/>',
         f'<line x1="{SPLIT}" y1="{TOP}" x2="{SPLIT}" y2="{H - 28}" stroke="{C["edge"]}"/>',
         f'<line x1="0" y1="{H - 28}" x2="{W}" y2="{H - 28}" stroke="{C["edge"]}"/>',
-        line(4, H - 8, [(f"[{USER}] ", "user"), ("0:zsh* ", "cmd"), ("1:cat", "dim")]),
-        line(W - 4, H - 8, [(f"updated {today}", "dim")], "end"),
+        line(16, H - 9, [(f"[{USER}] ", "user"), ("0:zsh* ", "cmd"), ("1:cat", "dim")]),
+        line(W - 16, H - 9, [(f"updated {today}", "dim")], "end"),
     ]
 
     # left pane: a short shell session
-    x, y = 4, TOP + 24
+    x, y = 16, TOP + 24
     k2 = x + 72  # value column
 
     def cmd(c):
