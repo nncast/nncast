@@ -7,7 +7,7 @@
 <line x1="560" y1="30" x2="560" y2="402" stroke="#d0d7de"/>
 <line x1="0" y1="402" x2="840" y2="402" stroke="#d0d7de"/>
 <text x="16" y="421" text-anchor="start" xml:space="preserve"><tspan fill="#c4256e">[nncast] </tspan><tspan fill="#1f2328">0:zsh* </tspan><tspan fill="#6e7781">1:cat</tspan></text>
-<text x="824" y="421" text-anchor="end" xml:space="preserve"><tspan fill="#6e7781">updated 2026-10-28</tspan></text>
+<text x="824" y="421" text-anchor="end" xml:space="preserve"><tspan fill="#6e7781">updated 2026-10-29</tspan></text>
 <text x="16" y="54" text-anchor="start" xml:space="preserve"><tspan fill="#c4256e">janelle</tspan><tspan fill="#6e7781">@</tspan><tspan fill="#c4256e">nncast</tspan><tspan fill="#6e7781">:</tspan><tspan fill="#0e7490">~</tspan><tspan fill="#6e7781">$ </tspan><tspan fill="#1f2328">whoami</tspan></text>
 <text x="16" y="72" text-anchor="start" xml:space="preserve"><tspan fill="#31363c">Janelle Ann Castillo, designer &amp; developer</tspan></text>
 <text x="16" y="108" text-anchor="start" xml:space="preserve"><tspan fill="#c4256e">janelle</tspan><tspan fill="#6e7781">@</tspan><tspan fill="#c4256e">nncast</tspan><tspan fill="#6e7781">:</tspan><tspan fill="#0e7490">~</tspan><tspan fill="#6e7781">$ </tspan><tspan fill="#1f2328">cat about.txt</tspan></text>
